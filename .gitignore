@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Raw + derived datasets are large (RE2-OB alone is 8.66 GB extracted)
+data/raw/
+data/processed/
+*.zip
+*.tar.gz
+
+runs/
+*.ckpt
+*.pt
