@@ -92,20 +92,44 @@ delay, loss and partitions (already part of the fault-injection plan), and
 `kind` or local VMs can provide a multi-node topology if node-level realism is
 needed.
 
-## Alternatives, if a dedicated machine is not available
+## Interim plan: Phase 1 on Colab or Kaggle
 
-Ranked by suitability:
+Free notebooks are enough to **start** Phase 1 on D1 now, without waiting for a
+machine. The key is that preprocessing runs once: raw data is downloaded and
+parsed in one session, and only the derived tensors (megabytes) are kept —
+in Google Drive (Colab) or as a Kaggle Dataset / notebook output (Kaggle).
+Later sessions load those tensors and never touch the raw 8.66 GB again.
+
+|                        | Colab (free)            | Kaggle (CPU notebook)          |
+|------------------------|-------------------------|--------------------------------|
+| RAM                    | ~12 GB                  | ~30 GB                         |
+| Scratch disk           | ~100 GB, wiped per session | tens of GB, wiped per session |
+| Persistent storage     | Google Drive (15 GB free) | `/kaggle/working` output (~20 GB), private Datasets |
+| Session limit          | ~12 h, idle disconnects | ~12 h                          |
+| D1 (8.66 GB extracted) | Fits                    | Fits                           |
+
+Figures are approximate and change over time; check with `!df -h` and
+`!free -g` in the notebook.
+
+What free notebooks **cannot** cover:
+
+- **D2** — the 13.4 GB `.tar.gz` extracts to ~97.5 GB, beyond comfortable
+  scratch space. Streaming the archive case by case might work but is
+  unproven and fragile against session limits.
+- **Phase 2** — neither platform can run Docker or a Kubernetes cluster, so the
+  testbed needs a real machine regardless.
+
+So notebooks unblock the reproduction milestone; the dedicated machine is still
+required for D2 and for all of Phase 2.
+
+## Other alternatives
 
 1. **University HPC / research cluster** - if it offers ~250 GB persistent
    storage and long-running jobs, this covers Phase 1 fully. Phase 2 needs
    container orchestration permissions, which shared clusters often restrict.
 2. **Cloud VM with a persistent disk** - workable for Phase 1 at roughly
    $20-50/month. Phase 2 costs escalate as above.
-3. **Colab / Kaggle** - not viable. Kaggle offers ~20 GB against D2's 110 GB
-   requirement, and Colab's ephemeral disk would mean re-downloading 13.4 GB
-   and repeating hours of preprocessing every session, with disconnects during
-   long jobs.
 
-The requirement is ~250 GB persistent storage minimum, 32-64 GB RAM, and the
-ability to run multi-hour jobs and a container runtime. How that is provided is
-flexible; that it is provided is not.
+The requirement for the full project is ~250 GB persistent storage, 32-64 GB
+RAM, and the ability to run multi-hour jobs and a container runtime. How that is
+provided is flexible; that it is provided is not.
