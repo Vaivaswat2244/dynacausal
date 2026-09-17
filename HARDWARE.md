@@ -15,29 +15,37 @@ behind each number. Written for the supervisor discussion.
 No GPU is required. This is deliberate and worth stating up front: the model is
 small (32-dim embeddings, 2 Transformer layers, 2 GAT layers, <=50 graph nodes).
 
-## Why the current laptop cannot be used
+## What the current laptop can and cannot do
 
-Measured, not estimated:
+Measured on the development laptop (8 cores, no GPU):
 
 ```
+$ free -g
+Mem:   total 7   used 5   available 2
 $ df -h /
-/dev/nvme0n1p4  221G  207G  4.0G  99% /
+/dev/nvme0n1p4  221G  152G   59G  73% /
 ```
 
-The single drive is 99% full with 4.0 GB free (1.3 GB of that already consumed
-by this project's Python environment).
+Disk was at 99% (4.0 GB free) when this project started; space has since been
+cleared to 59 GB free. **RAM, not disk, is now the binding limit:** 7 GB in
+total, about 2 GB available in normal use.
 
 Dataset sizes were measured without downloading, by reading each archive's ZIP
 central directory over HTTP range requests (`tools/probe_remote_zip.py`):
 
-| Dataset            | Download | Extracted   | Peak need | Free   | Short by |
-|--------------------|----------|-------------|-----------|--------|----------|
-| D1 (RE2-OB)        | 1.19 GB  | **8.66 GB** | 9.8 GB    | 4.0 GB | ~6 GB    |
-| D2 (rcabench)      | 13.4 GB  | ~97.5 GB*   | ~111 GB   | 4.0 GB | ~107 GB  |
+| Dataset            | Download | Extracted   | Peak need | Fits on laptop? |
+|--------------------|----------|-------------|-----------|-----------------|
+| D1 (RE2-OB)        | 1.19 GB  | **8.66 GB** | 9.8 GB    | Yes (59 GB free) |
+| D2 (rcabench)      | 13.4 GB  | ~97.5 GB*   | ~111 GB   | **No**          |
 
 \* extrapolated from D1's measured 7.3x expansion ratio.
 
-**The laptop cannot hold D1 — the small dataset — let alone D2.**
+So the laptop covers **Phase 1 on D1**: a single fault case (68 MB) was fetched
+and parsed on it (`DATA_SCHEMA.md`). It cannot cover:
+
+- **D2** — about twice the free disk.
+- **Phase 2** — the Kubernetes testbed needs 32–64 GB of RAM (breakdown below);
+  the laptop has 7 GB.
 
 Reproduce with:
 
@@ -92,11 +100,11 @@ delay, loss and partitions (already part of the fault-injection plan), and
 `kind` or local VMs can provide a multi-node topology if node-level realism is
 needed.
 
-## Interim plan: Phase 1 on Colab or Kaggle
+## Interim plan: Phase 1 on the laptop, Colab or Kaggle
 
-Free notebooks are enough to **start** Phase 1 on D1 now, without waiting for a
-machine. The key is that preprocessing runs once: raw data is downloaded and
-parsed in one session, and only the derived tensors (megabytes) are kept —
+D1 now fits on the laptop. Free notebooks are an alternative with more RAM,
+useful if preprocessing runs out of memory locally. On a notebook the key is
+that preprocessing runs once: raw data is downloaded and parsed in one session, and only the derived tensors (megabytes) are kept —
 in Google Drive (Colab) or as a Kaggle Dataset / notebook output (Kaggle).
 Later sessions load those tensors and never touch the raw 8.66 GB again.
 

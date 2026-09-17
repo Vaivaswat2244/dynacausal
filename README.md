@@ -44,21 +44,22 @@ ranking loss keeping the root cause above the services it affected.
 
 | Milestone | State |
 |---|---|
-| 0. Environment, datasets, `DATA_SCHEMA.md` | Environment done. Datasets located and sized. D1 to be processed on Colab/Kaggle; D2 needs the dedicated machine (see [`HARDWARE.md`](HARDWARE.md)) |
-| 1. D1 preprocessing + dynamic graph | Edge-weight computation done and tested; data loading pending |
+| 0. Environment, datasets, `DATA_SCHEMA.md` | Environment done. D1 schema documented from a real case ([`DATA_SCHEMA.md`](DATA_SCHEMA.md)); D2 needs the dedicated machine ([`HARDWARE.md`](HARDWARE.md)) |
+| 1. D1 preprocessing + dynamic graph | **Call graphs built from real traces**; per-service feature extraction next |
 | 2. End-to-end forward pass | **Done** |
 | 3. CE training loop + eval harness | Eval harness done; training loop pending data |
 | 4. TCD and SCO losses | Pending decisions on `P(r)` and `H_norm` |
 | 5. Tune to the D1 row | — |
 | 6. Scale to D2 | — |
 
-47 unit tests pass.
+53 unit tests pass.
 
 ## Repository layout
 
 ```
 src/
   data/graph.py        dynamic call graph: e_ij formula, per-window graph build
+  data/loaders.py      RE2 case discovery; spans -> per-window call graphs
   model/encoder.py     per-service Transformer temporal encoder
   model/hgat.py        Hybrid-Aware GAT (custom MessagePassing)
   model/head.py        per-node shared MLP scoring head
@@ -67,6 +68,8 @@ src/
 tests/                 unit tests for all of the above
 tools/
   probe_remote_zip.py  measure a remote ZIP's extracted size without downloading
+  fetch_zip_member.py  extract chosen files (e.g. one fault case) from a remote ZIP
+DATA_SCHEMA.md         what is actually in the datasets
 HARDWARE.md            compute requirements, with measurements
 OBJECTIVE.Md           project brief
 ```
@@ -136,6 +139,13 @@ recorded so results can be interpreted correctly.
   [0.500, 0.731]; an idle edge still passes about half its message.
   Implemented as written for fidelity; `compute_edge_weights(rescale=True)`
   stretches the range to [0, 1] for a later ablation.
+- **Error counts alone blame the wrong service.** In
+  `productcatalogservice_loss`, most client errors appear on
+  frontend -> recommendationservice (176 vs 15 on the root cause's own edge),
+  because recommendationservice depends on productcatalogservice.
+- **Call-graph edges must come from client spans.** Some services emit no
+  server spans, and failed calls under packet loss may leave none; a
+  parent-span join finds 9 edges where client spans find 14.
 - **Min-max normalisation is degenerate for sparse windows.** With two edges
   the normalised values are always exactly {0, 1}, whatever the traffic.
 
