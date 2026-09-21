@@ -66,6 +66,7 @@ src/
   model/dynacausal.py  full model wiring + per-window graph batching
   eval.py              AC@k, Avg@5, MRR; paper Table 2 targets
 tests/                 unit tests for all of the above
+scripts/demo.py        end-to-end walkthrough of what currently works
 tools/
   probe_remote_zip.py  measure a remote ZIP's extracted size without downloading
   fetch_zip_member.py  extract chosen files (e.g. one fault case) from a remote ZIP
@@ -99,6 +100,16 @@ PyTorch is preinstalled; only PyG is needed:
 Colab and Kaggle disks are wiped between sessions, so preprocess once and save the derived
 tensors (megabytes, not gigabytes) to Google Drive; later sessions load those
 instead of re-downloading the raw dataset. Kaggle works the same way (`pip install torch_geometric`; enable Internet in notebook settings to download the dataset).
+
+## Demonstration
+
+With one fault case present in `data/raw` (see below), this prints the state of
+the project end to end — the real data, the propagation problem, the dynamic
+call graph before and after the fault, and the model's forward pass:
+
+```bash
+.venv/bin/python scripts/demo.py
+```
 
 ## Datasets
 
