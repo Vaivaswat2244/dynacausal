@@ -67,6 +67,7 @@ src/
   eval.py              AC@k, Avg@5, MRR; paper Table 2 targets
 tests/                 unit tests for all of the above
 scripts/demo.py        end-to-end walkthrough of what currently works
+notebooks/colab_d1.ipynb  Colab setup: dataset download, Drive cache, tests
 tools/
   probe_remote_zip.py  measure a remote ZIP's extracted size without downloading
   fetch_zip_member.py  extract chosen files (e.g. one fault case) from a remote ZIP
@@ -87,7 +88,15 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests/ -q
 ```
 
-### On Google Colab or Kaggle
+### On Google Colab
+
+`notebooks/colab_d1.ipynb` sets up the repo, downloads D1, caches the archive to
+Google Drive and runs the tests and demo. Open it via
+[Colab's GitHub tab](https://colab.research.google.com/github/Vaivaswat2244/dynacausal/blob/main/notebooks/colab_d1.ipynb)
+(a private repo needs Colab's GitHub access granted, or clone with a token as the
+notebook's first cells do).
+
+### Manually, on Colab or Kaggle
 
 PyTorch is preinstalled; only PyG is needed:
 
