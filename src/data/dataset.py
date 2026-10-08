@@ -51,6 +51,13 @@ def build_sample(case: Case, grid_s: int, window_T: int, edge_alpha: float,
 def build_dataset(raw_root: str, out_path: str, grid_s: int = 15,
                   window_T: int = 20, edge_alpha: float = 0.5) -> dict:
     cases = discover_cases(raw_root)
+    # The archive contains stray entries beyond the 90 real cases; keep only
+    # directories whose name parses to a known Online Boutique service.
+    kept = [c for c in cases if c.root_cause in OB_SERVICES]
+    if len(kept) != len(cases):
+        skipped = [str(c.path) for c in cases if c not in kept]
+        print(f"skipping {len(skipped)} non-case path(s): {skipped}")
+    cases = kept
     samples = []
     for i, case in enumerate(cases):
         samples.append(build_sample(case, grid_s, window_T, edge_alpha))
