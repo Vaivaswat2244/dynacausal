@@ -34,7 +34,9 @@ def main(zip_path="data/RE2-OB.zip", out_path="data/processed/d1.pt"):
         parts = name.split("/")
         # RE2-OB/{service}_{fault}/{rep}/{file}
         if len(parts) == 4 and parts[3] in NEEDED and "_" in parts[1]:
-            if parts[1].rsplit("_", 1)[0] in OB_SERVICES:
+            # A real case path is {service}_{fault}/{rep}/ with a numeric rep;
+            # the archive also holds strays like .../multi-source-data/.
+            if parts[1].rsplit("_", 1)[0] in OB_SERVICES and parts[2].isdigit():
                 by_case[(parts[1], parts[2])].append(name)
 
     print(f"{len(by_case)} cases in archive")

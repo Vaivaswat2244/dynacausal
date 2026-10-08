@@ -8,8 +8,14 @@ no code, so this is built from the equations in the paper.
 
 | Dataset | AC@1 | AC@3 | AC@5 | Avg@5 | MRR |
 |---|---|---|---|---|---|
-| D1 — paper target | 0.769 | 0.980 | 1.000 | 0.937 | 0.873 |
+| D1 — paper target (full loss, tuned) | 0.769 | 0.980 | 1.000 | 0.937 | 0.873 |
+| D1 — ours, CE loss only, untuned | 0.733 | 0.800 | 0.867 | 0.813 | 0.802 |
 | D1 — untrained model (chance) | 0.067 | 0.267 | 0.467 | 0.269 | 0.259 |
+
+The CE-only gap is concentrated in AC@3 (0.80 vs 0.98): when the first guess is
+wrong, the truth is often not near the top either. That is the failure mode the
+paper's TCD and SCO losses target, which are the next milestone. 30 test cases
+means one case moves AC@k by 0.033; read all numbers accordingly.
 
 The full project brief is in [`OBJECTIVE.Md`](OBJECTIVE.Md).
 
@@ -45,14 +51,14 @@ ranking loss keeping the root cause above the services it affected.
 | Milestone | State |
 |---|---|
 | 0. Environment, datasets, `DATA_SCHEMA.md` | Environment done. D1 schema documented from a real case ([`DATA_SCHEMA.md`](DATA_SCHEMA.md)); D2 needs the dedicated machine ([`HARDWARE.md`](HARDWARE.md)) |
-| 1. D1 preprocessing + dynamic graph | **Call graphs built from real traces**; per-service feature extraction next |
+| 1. D1 preprocessing + dynamic graph | **Done** — streamed from the zip, one case at a time |
 | 2. End-to-end forward pass | **Done** |
-| 3. CE training loop + eval harness | Eval harness done; training loop pending data |
+| 3. CE training loop + eval harness | **Done** — test AC@1 0.733 vs paper 0.769 |
 | 4. TCD and SCO losses | Pending decisions on `P(r)` and `H_norm` |
 | 5. Tune to the D1 row | — |
 | 6. Scale to D2 | — |
 
-53 unit tests pass.
+62 unit tests pass.
 
 ## Repository layout
 
