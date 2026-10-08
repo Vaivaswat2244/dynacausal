@@ -24,7 +24,7 @@ from src.data.loaders import OB_SERVICES, Case
 # the current feature recipe, and skipping it saves extraction time and disk.
 NEEDED = {"simple_metrics.csv", "logs.csv", "traces.csv", "inject_time.txt"}
 
-GRID_S, WINDOW_T, EDGE_ALPHA = 15, 20, 0.5
+GRID_S = 15
 
 
 def main(zip_path="data/RE2-OB.zip", out_path="data/processed/d1.pt"):
@@ -47,15 +47,13 @@ def main(zip_path="data/RE2-OB.zip", out_path="data/processed/d1.pt"):
         for m in members:
             zf.extract(m, tmp_root)
         try:
-            samples.append(build_sample(Case.from_path(case_dir),
-                                        GRID_S, WINDOW_T, EDGE_ALPHA))
+            samples.append(build_sample(Case.from_path(case_dir), GRID_S))
         finally:
             shutil.rmtree(tmp_root / "RE2-OB" / group, ignore_errors=True)
         if (i + 1) % 10 == 0:
             print(f"  {i + 1}/{len(by_case)}", flush=True)
 
-    meta = {"grid_s": GRID_S, "window_T": WINDOW_T, "edge_alpha": EDGE_ALPHA,
-            "services": list(OB_SERVICES)}
+    meta = {"grid_s": GRID_S, "services": list(OB_SERVICES)}
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     torch.save({"samples": samples, "meta": meta}, out_path)
     n_train = sum(s["split"] == "train" for s in samples)

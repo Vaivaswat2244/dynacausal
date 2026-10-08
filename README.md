@@ -8,14 +8,16 @@ no code, so this is built from the equations in the paper.
 
 | Dataset | AC@1 | AC@3 | AC@5 | Avg@5 | MRR |
 |---|---|---|---|---|---|
-| D1 — paper target (full loss, tuned) | 0.769 | 0.980 | 1.000 | 0.937 | 0.873 |
-| D1 — ours, CE loss only, untuned | 0.733 | 0.800 | 0.867 | 0.813 | 0.802 |
-| D1 — untrained model (chance) | 0.067 | 0.267 | 0.467 | 0.269 | 0.259 |
+| D1 — paper target | 0.769 | 0.980 | 1.000 | 0.937 | 0.873 |
+| D1 — ours, full loss, default hparams | **0.833** | 0.933 | 0.933 | 0.907 | **0.887** |
+| D1 — ours, CE loss only | 0.733 | 0.800 | 0.867 | 0.813 | 0.802 |
+| D1 — untrained (chance) | 0.067 | 0.267 | 0.467 | 0.269 | 0.259 |
 
-The CE-only gap is concentrated in AC@3 (0.80 vs 0.98): when the first guess is
-wrong, the truth is often not near the top either. That is the failure mode the
-paper's TCD and SCO losses target, which are the next milestone. 30 test cases
-means one case moves AC@k by 0.033; read all numbers accordingly.
+Every full-loss column is within two cases of Table 2 (n=30, so one case moves
+AC@k by 0.033); AC@1 and MRR exceed the paper. The CE-only row doubles as an
+ablation: adding TCD and SCO lifts AC@3 from 0.800 to 0.933, which is precisely
+the failure mode those losses target. Model selection is by validation MRR on a
+10-case split carved from the 60 training cases; test is touched once per run.
 
 The full project brief is in [`OBJECTIVE.Md`](OBJECTIVE.Md).
 
@@ -54,11 +56,11 @@ ranking loss keeping the root cause above the services it affected.
 | 1. D1 preprocessing + dynamic graph | **Done** — streamed from the zip, one case at a time |
 | 2. End-to-end forward pass | **Done** |
 | 3. CE training loop + eval harness | **Done** — test AC@1 0.733 vs paper 0.769 |
-| 4. TCD and SCO losses | Pending decisions on `P(r)` and `H_norm` |
-| 5. Tune to the D1 row | — |
+| 4. TCD and SCO losses | **Done** — defaults: `P(r)` = 1-hop in window graph, `H_norm` = pre-fault half |
+| 5. Tune to the D1 row | **Reproduced with defaults**; hyperparameter sweep for robustness in progress |
 | 6. Scale to D2 | — |
 
-62 unit tests pass.
+72 unit tests pass.
 
 ## Repository layout
 
@@ -160,6 +162,11 @@ recorded so results can be interpreted correctly.
 
 ## Findings so far
 
+- **The paper's Eq. 8 contradicts its own prose.** As printed, the TCD hinge
+  is minimised by keeping the root cause *similar* to its normal state, the
+  reverse of the stated intuition. We train the intuition-consistent
+  orientation by default and keep the literal form behind
+  `loss.tcd_as_written` for the ablation.
 - **The edge-weight formula never gates an edge off.** Both inputs are
   normalised to [0, 1], so the sigmoid confines every `e_ij` to
   [0.500, 0.731]; an idle edge still passes about half its message.
