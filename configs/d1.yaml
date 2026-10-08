@@ -1,0 +1,28 @@
+# D1 - RCAEval RE2-OB (Online Boutique)
+data:
+  raw_root: data/raw/RE2-OB
+  processed: data/processed/d1.pt
+  grid_s: 15          # feature bucket, seconds
+  window_T: 20        # buckets per window (= 5 minutes)
+  edge_alpha: 0.5     # traffic-vs-error blend in e_ij (unspecified in paper)
+
+model:
+  d_in: 13            # 5 metrics + 5 log levels + 3 trace stats (DATA_SCHEMA.md)
+  d_temp: 32          # paper
+  d_spat: 32
+  d_head: 32
+  n_enc_layers: 2     # paper
+  n_gat_layers: 2     # paper
+  enc_heads: 4
+  gat_heads: 4
+  gat_hidden: 16
+  dropout: 0.1
+  pooling: mean
+
+train:
+  lr: 0.001
+  weight_decay: 0.0001
+  epochs: 300
+  batch_size: 20
+  seed: 7
+  eval_every: 25
