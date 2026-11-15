@@ -1,0 +1,60 @@
+{
+ "run": "phase1_full_loss_retrain_after_data_loss",
+ "date": "2026-11-15T16:11:07",
+ "git_commit": "ad5a3d5691b9d3425c9c7531f6a726d38a0a0606",
+ "config": {
+  "data": {
+   "raw_root": "data/raw/RE2-OB",
+   "processed": "data/processed/d1.pt",
+   "grid_s": 15,
+   "window_T": 20,
+   "edge_alpha": 0.5
+  },
+  "model": {
+   "d_in": 13,
+   "d_temp": 32,
+   "d_spat": 32,
+   "d_head": 32,
+   "n_enc_layers": 2,
+   "n_gat_layers": 2,
+   "enc_heads": 4,
+   "gat_heads": 4,
+   "gat_hidden": 16,
+   "dropout": 0.1,
+   "pooling": "mean"
+  },
+  "loss": {
+   "lambda1": 0.1,
+   "lambda2": 0.2,
+   "delta": 0.2,
+   "m": 0.1,
+   "tcd_as_written": false
+  },
+  "train": {
+   "lr": 0.001,
+   "weight_decay": 0.0001,
+   "epochs": 400,
+   "batch_size": 20,
+   "seed": 7,
+   "eval_every": 5,
+   "patience": 15
+  }
+ },
+ "split": "deterministic: reps 1,2 train / rep 3 test (60/30); val = rep 2 of every 3rd group",
+ "test": {
+  "AC@1": 0.833,
+  "AC@3": 0.933,
+  "AC@5": 0.933,
+  "Avg@5": 0.907,
+  "MRR": 0.887,
+  "n": 30
+ },
+ "best_val_mrr": 0.749,
+ "best_epoch": 245,
+ "matches_commit_ad5a3d5": true,
+ "artifacts": [
+  "results/d1_full_model.pt",
+  "results/d1_norm_stats.pt",
+  "results/retrain_log.txt"
+ ]
+}

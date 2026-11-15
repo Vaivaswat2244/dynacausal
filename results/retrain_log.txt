@@ -1,0 +1,34 @@
+90 cases in archive
+  10/90
+  20/90
+  30/90
+  40/90
+  50/90
+  60/90
+  70/90
+  80/90
+  90/90
+saved 90 samples (60 train / 30 test) -> data/processed/d1.pt
+saved train normalisation stats -> results/d1_norm_stats.pt
+/home/vaivaswat/Documents/projects/MTP/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/vaivaswat/Documents/projects/MTP/src/model/encoder.py:95: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  self.transformer = nn.TransformerEncoder(layer, num_layers=n_layers)
+50 train / 10 val / 30 test
+epoch   25  loss 1.725 (ce 1.677 tcd 0.133 sco 0.171)  val MRR 0.490  best 0.496@20
+epoch   50  loss 0.731 (ce 0.680 tcd 0.252 sco 0.131)  val MRR 0.509  best 0.569@45
+epoch   75  loss 0.485 (ce 0.458 tcd 0.068 sco 0.105)  val MRR 0.560  best 0.614@60
+epoch  100  loss 0.331 (ce 0.327 tcd 0.018 sco 0.010)  val MRR 0.562  best 0.662@80
+epoch  125  loss 0.098 (ce 0.095 tcd 0.016 sco 0.010)  val MRR 0.614  best 0.662@80
+epoch  150  loss 0.300 (ce 0.283 tcd 0.080 sco 0.043)  val MRR 0.668  best 0.669@135
+epoch  175  loss 0.474 (ce 0.466 tcd 0.014 sco 0.033)  val MRR 0.681  best 0.698@170
+epoch  200  loss 1.059 (ce 1.024 tcd 0.220 sco 0.066)  val MRR 0.635  best 0.710@190
+epoch  225  loss 0.009 (ce 0.005 tcd 0.027 sco 0.007)  val MRR 0.705  best 0.713@220
+epoch  250  loss 0.084 (ce 0.079 tcd 0.013 sco 0.021)  val MRR 0.650  best 0.749@245
+epoch  275  loss 0.068 (ce 0.055 tcd 0.025 sco 0.052)  val MRR 0.738  best 0.749@245
+epoch  300  loss 0.072 (ce 0.064 tcd 0.023 sco 0.027)  val MRR 0.730  best 0.749@245
+
+best val MRR 0.749 at epoch 245
+RESULT test : AC@1=0.833  AC@3=0.933  AC@5=0.933  Avg@5=0.907  MRR=0.887  (n=30)
+paper D1    : AC@1=0.769  AC@3=0.980  AC@5=1.000  Avg@5=0.937  MRR=0.873  (n=30)
+checkpoint  : data/processed/d1_full_model.pt
