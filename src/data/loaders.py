@@ -33,6 +33,8 @@ GRPC_OK = 0
 
 # Client spans name the *called* service in their operation, e.g.
 # "hipstershop.ProductCatalogService/GetProduct" or with a leading slash.
+# "grpc.hipstershop.X/Y" is a SERVER span (OTel grpc-js prefixes the rpc
+# system) and is deliberately excluded: calls come from client spans only.
 _OP_RE = re.compile(r"^/?hipstershop\.(\w+)/")
 
 
