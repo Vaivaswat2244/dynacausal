@@ -1,0 +1,8 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata: {name: ${NAME}, namespace: boutique}
+spec:
+  mode: all
+  selector: {namespaces: [boutique], labelSelectors: {app: ${SERVICE}}}
+  stressors: {memory: {workers: 2, size: "256MB"}}
+  duration: ${DURATION}

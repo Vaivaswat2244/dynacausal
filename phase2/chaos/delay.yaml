@@ -1,0 +1,9 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata: {name: ${NAME}, namespace: boutique}
+spec:
+  action: delay
+  mode: all
+  selector: {namespaces: [boutique], labelSelectors: {app: ${SERVICE}}}
+  delay: {latency: "500ms", jitter: "100ms"}
+  duration: ${DURATION}

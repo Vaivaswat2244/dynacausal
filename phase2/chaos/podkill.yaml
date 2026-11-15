@@ -1,0 +1,8 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata: {name: ${NAME}, namespace: boutique}
+spec:
+  action: pod-failure
+  mode: all
+  selector: {namespaces: [boutique], labelSelectors: {app: ${SERVICE}}}
+  duration: ${DURATION}

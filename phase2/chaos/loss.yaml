@@ -1,0 +1,9 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata: {name: ${NAME}, namespace: boutique}
+spec:
+  action: loss
+  mode: all
+  selector: {namespaces: [boutique], labelSelectors: {app: ${SERVICE}}}
+  loss: {loss: "40", correlation: "25"}
+  duration: ${DURATION}
