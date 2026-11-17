@@ -1,0 +1,395 @@
+/home/vaivaswat/Documents/projects/MTP/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/vaivaswat/Documents/projects/MTP/src/model/encoder.py:95: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  self.transformer = nn.TransformerEncoder(layer, num_layers=n_layers)
+checkoutservice_cpu/1: 22 windows, inject_idx 20, label 2, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+checkoutservice_delay/1: 22 windows, inject_idx 18, label 2, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+checkoutservice_loss/1: 22 windows, inject_idx 17, label 2, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+checkoutservice_mem/1: 22 windows, inject_idx 16, label 2, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+currencyservice_cpu/1: 22 windows, inject_idx 16, label 3, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+currencyservice_delay/1: 22 windows, inject_idx 18, label 3, top-1 per window [8, 8, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11]
+currencyservice_loss/1: 22 windows, inject_idx 14, label 3, top-1 per window [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 8, 8, 8]
+currencyservice_mem/1: 22 windows, inject_idx 19, label 3, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+emailservice_cpu/1: 22 windows, inject_idx 14, label 4, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+emailservice_delay/1: 22 windows, inject_idx 15, label 4, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+emailservice_loss/1: 22 windows, inject_idx 17, label 4, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+emailservice_mem/1: 22 windows, inject_idx 21, label 4, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+none_none/1: 22 windows, inject_idx 0, label None, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+none_none/2: 22 windows, inject_idx 0, label None, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+none_none/3: 22 windows, inject_idx 0, label None, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+productcatalogservice_cpu/1: 22 windows, inject_idx 20, label 8, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+productcatalogservice_delay/1: 22 windows, inject_idx 17, label 8, top-1 per window [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11]
+productcatalogservice_loss/1: 22 windows, inject_idx 21, label 8, top-1 per window [8, 8, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11]
+productcatalogservice_mem/1: 22 windows, inject_idx 15, label 8, top-1 per window [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 8, 8, 8, 8, 8, 8]
+recommendationservice_cpu/1: 23 windows, inject_idx 19, label 9, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+recommendationservice_delay/1: 22 windows, inject_idx 14, label 9, top-1 per window [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11]
+recommendationservice_loss/1: 22 windows, inject_idx 18, label 9, top-1 per window [8, 8, 8, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11]
+recommendationservice_mem/1: 22 windows, inject_idx 17, label 9, top-1 per window [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+{
+ "at_fault_time": {
+  "model": {
+   "AC@1": 0.05,
+   "AC@3": 0.1,
+   "AC@5": 0.35,
+   "MRR": 0.2115674603174603,
+   "n": 20,
+   "ranks": [
+    5,
+    8,
+    8,
+    8,
+    4,
+    7,
+    4,
+    5,
+    7,
+    9,
+    7,
+    9,
+    1,
+    6,
+    4,
+    3,
+    6,
+    9,
+    9,
+    6
+   ]
+  },
+  "metric_jump": {
+   "AC@1": 0.2,
+   "AC@3": 0.45,
+   "AC@5": 0.6,
+   "MRR": 0.3748611111111111,
+   "n": 20,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    10,
+    10,
+    10,
+    10,
+    3,
+    2,
+    2,
+    3,
+    9,
+    9,
+    10,
+    8,
+    5,
+    5,
+    3,
+    4
+   ]
+  },
+  "error_count": {
+   "AC@1": 0.1,
+   "AC@3": 0.6,
+   "AC@5": 0.6,
+   "MRR": 0.38333333333333336,
+   "n": 20,
+   "ranks": [
+    12,
+    2,
+    1,
+    1,
+    12,
+    2,
+    12,
+    2,
+    12,
+    2,
+    12,
+    2,
+    12,
+    2,
+    2,
+    2,
+    12,
+    2,
+    2,
+    12
+   ]
+  }
+ },
+ "no_fault_time": {
+  "model": {
+   "AC@1": 0.15,
+   "AC@3": 0.2,
+   "AC@5": 0.5,
+   "MRR": 0.3044246031746032,
+   "n": 20,
+   "ranks": [
+    5,
+    5,
+    9,
+    8,
+    4,
+    4,
+    4,
+    4,
+    7,
+    9,
+    6,
+    7,
+    1,
+    3,
+    1,
+    1,
+    6,
+    9,
+    9,
+    6
+   ]
+  },
+  "metric_jump": {
+   "AC@1": 0.2,
+   "AC@3": 0.35,
+   "AC@5": 0.6,
+   "MRR": 0.3601388888888889,
+   "n": 20,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    10,
+    10,
+    10,
+    10,
+    4,
+    2,
+    3,
+    4,
+    10,
+    9,
+    10,
+    8,
+    3,
+    5,
+    4,
+    4
+   ]
+  },
+  "error_count": {
+   "AC@1": 0.1,
+   "AC@3": 0.6,
+   "AC@5": 0.6,
+   "MRR": 0.38333333333333336,
+   "n": 20,
+   "ranks": [
+    12,
+    2,
+    1,
+    1,
+    12,
+    2,
+    12,
+    2,
+    12,
+    2,
+    12,
+    2,
+    12,
+    2,
+    2,
+    2,
+    12,
+    2,
+    2,
+    12
+   ]
+  }
+ },
+ "time_to_diagnosis": {
+  "median_s": 7.5,
+  "all_s": [
+   0,
+   15
+  ],
+  "diagnosed": 2,
+  "never_within_fault": 18,
+  "n": 20
+ },
+ "false_alarms": {
+  "0.5": {
+   "none_runs": 1.0,
+   "pre_fault": 1.0,
+   "post_fault": 1.0
+  },
+  "0.7": {
+   "none_runs": 1.0,
+   "pre_fault": 1.0,
+   "post_fault": 0.8526315789473684
+  },
+  "0.9": {
+   "none_runs": 0.0,
+   "pre_fault": 0.0,
+   "post_fault": 0.0
+  }
+ },
+ "n_windows": {
+  "none": 66,
+  "pre": 6,
+  "post": 95
+ },
+ "top_score": {
+  "none_runs": {
+   "min": 0.7141093015670776,
+   "median": 0.717545360326767,
+   "max": 0.7226819396018982
+  },
+  "pre_fault": {
+   "min": 0.71759033203125,
+   "median": 0.7192610800266266,
+   "max": 0.7229626774787903
+  },
+  "post_fault": {
+   "min": 0.672175407409668,
+   "median": 0.71834796667099,
+   "max": 0.7249341607093811
+  }
+ },
+ "per_fault": {
+  "cpu": {
+   "at_fault_time": {
+    "AC@1": 0.2,
+    "AC@3": 0.2,
+    "AC@5": 0.6,
+    "MRR": 0.3519047619047619,
+    "n": 5,
+    "ranks": [
+     5,
+     4,
+     7,
+     1,
+     6
+    ]
+   },
+   "no_fault_time": {
+    "AC@1": 0.2,
+    "AC@3": 0.2,
+    "AC@5": 0.6,
+    "MRR": 0.3519047619047619,
+    "n": 5,
+    "ranks": [
+     5,
+     4,
+     7,
+     1,
+     6
+    ]
+   }
+  },
+  "delay": {
+   "at_fault_time": {
+    "AC@1": 0.0,
+    "AC@3": 0.0,
+    "AC@5": 0.0,
+    "MRR": 0.13134920634920635,
+    "n": 5,
+    "ranks": [
+     8,
+     7,
+     9,
+     6,
+     9
+    ]
+   },
+   "no_fault_time": {
+    "AC@1": 0.0,
+    "AC@3": 0.2,
+    "AC@5": 0.6,
+    "MRR": 0.2011111111111111,
+    "n": 5,
+    "ranks": [
+     5,
+     4,
+     9,
+     3,
+     9
+    ]
+   }
+  },
+  "loss": {
+   "at_fault_time": {
+    "AC@1": 0.0,
+    "AC@3": 0.0,
+    "AC@5": 0.4,
+    "MRR": 0.17579365079365078,
+    "n": 5,
+    "ranks": [
+     8,
+     4,
+     7,
+     4,
+     9
+    ]
+   },
+   "no_fault_time": {
+    "AC@1": 0.2,
+    "AC@3": 0.2,
+    "AC@5": 0.4,
+    "MRR": 0.3277777777777778,
+    "n": 5,
+    "ranks": [
+     9,
+     4,
+     6,
+     1,
+     9
+    ]
+   }
+  },
+  "mem": {
+   "at_fault_time": {
+    "AC@1": 0.0,
+    "AC@3": 0.2,
+    "AC@5": 0.4,
+    "MRR": 0.18722222222222223,
+    "n": 5,
+    "ranks": [
+     8,
+     5,
+     9,
+     3,
+     6
+    ]
+   },
+   "no_fault_time": {
+    "AC@1": 0.2,
+    "AC@3": 0.2,
+    "AC@5": 0.4,
+    "MRR": 0.33690476190476193,
+    "n": 5,
+    "ranks": [
+     8,
+     4,
+     7,
+     1,
+     6
+    ]
+   }
+  }
+ },
+ "pipeline": {
+  "per_window_ms_median": 5.6313700042665005,
+  "per_window_ms_p95": 8.78598001145292,
+  "load_features_per_run_s_median": 0.685725146002369,
+  "load_features_per_run_s_max": 0.7565173950133612,
+  "n_windows_total": 507,
+  "peak_rss_mb": 430.875
+ },
+ "norm": "d1train",
+ "share_feature_values_outside_0_1": {
+  "mean": 0.08898888021369464,
+  "max": 0.09662288930581614
+ },
+ "n_runs": {
+  "fault": 20,
+  "none": 3
+ }
+}

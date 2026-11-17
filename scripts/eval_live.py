@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import resource
+import statistics
 import sys
 import time
 from pathlib import Path
@@ -25,6 +26,7 @@ import yaml
 from src.data.dataset import build_sample
 from src.data.graph import build_call_graph
 from src.data.loaders import OB_SERVICES, Case
+from src.data.preprocess import raw_case_features, scale_with_stats
 from src.model.dynacausal import DynaCausal
 from src.eval import evaluate
 
@@ -46,9 +48,27 @@ def window_at(sample, i0, T, edge_alpha, services=OB_SERVICES):
     return x, g.edge_index, g.edge_weight, stats
 
 
-def eval_run(run_dir, model, T, edge_alpha, grid_s):
-    """Slide over one run; returns the per-window record list and timings."""
-    sample = build_sample(Case.from_path(run_dir), grid_s)
+def eval_run(run_dir, model, T, edge_alpha, grid_s, stats=None):
+    """Slide over one run; returns the per-window record list and timings.
+
+    stats=None keeps the Phase 1 per-case min-max; otherwise (lo, hi) arrays
+    fitted on D1 train replace it. Also returns the share of feature values
+    that fall outside [0,1] after scaling and the load time in seconds.
+    """
+    t_load = time.perf_counter()
+    case = Case.from_path(run_dir)
+    if case.root_cause not in OB_SERVICES:
+        # no-fault run ("none_none"): build_sample needs some valid label;
+        # it is a placeholder and main() reports the label as None.
+        case.root_cause = OB_SERVICES[0]
+    sample = build_sample(case, grid_s)
+    out_of_range = 0.0
+    if stats is not None:
+        _, raw = raw_case_features(case, grid_s)
+        scaled = scale_with_stats(raw, *stats)
+        out_of_range = float(((scaled < 0) | (scaled > 1)).mean())
+        sample["feats"] = torch.tensor(scaled, dtype=torch.float32)
+    t_load = time.perf_counter() - t_load
     meta = json.loads((run_dir / "run.json").read_text())
     n_win = sample["n_buckets"] - T + 1
     recs, lat = [], []
@@ -74,15 +94,15 @@ def eval_run(run_dir, model, T, edge_alpha, grid_s):
         recs.append({
             "i0": i0,
             "start_unix": None,  # filled below from the grid origin
-            "scores": [round(float(v), 5) for v in scores],
-            "jump": [round(float(v), 5) for v in jump],
+            "scores": [float(v) for v in scores],
+            "jump": [float(v) for v in jump],
             "errc": [int(v) for v in errc],
         })
     # Bucket i starts at grid_origin + i*grid_s; reconstruct origin from inject.
     origin = meta["inject_time"] - sample["inject_idx"] * grid_s if meta["inject_time"] else meta["run_start"]
     for r in recs:
         r["start_unix"] = origin + r["i0"] * grid_s
-    return sample, meta, recs, lat
+    return sample, meta, recs, lat, t_load, out_of_range
 
 
 def rank_of(scores, label):
@@ -93,9 +113,10 @@ def rank_of(scores, label):
 
 def metrics_from_ranks(ranks):
     n = len(ranks)
-    out = {f"AC@{k}": round(sum(r <= k for r in ranks) / n, 3) for k in (1, 3, 5)}
-    out["MRR"] = round(sum(1 / r for r in ranks) / n, 3)
+    out = {f"AC@{k}": sum(r <= k for r in ranks) / n for k in (1, 3, 5)}
+    out["MRR"] = sum(1 / r for r in ranks) / n
     out["n"] = n
+    out["ranks"] = ranks
     return out
 
 
@@ -104,6 +125,11 @@ def main():
     ap.add_argument("prepared_root")
     ap.add_argument("--config", default="configs/d1.yaml")
     ap.add_argument("--checkpoint", default="results/d1_full_model.pt")
+    ap.add_argument("--norm", choices=["d1train", "percase"], default="d1train",
+                    help="d1train: scale with results/d1_norm_stats.pt; "
+                         "percase: Phase 1 per-recording min-max")
+    ap.add_argument("--stats", default="results/d1_norm_stats.pt")
+    ap.add_argument("--out", default="results/live")
     a = ap.parse_args()
 
     cfg = yaml.safe_load(open(a.config))
@@ -112,21 +138,30 @@ def main():
     model.load_state_dict(torch.load(a.checkpoint, weights_only=True))
     model.eval()
 
-    out_dir = Path("results/live"); out_dir.mkdir(parents=True, exist_ok=True)
+    stats = None
+    if a.norm == "d1train":
+        st = torch.load(a.stats, weights_only=True)
+        assert st["services"] == list(OB_SERVICES)
+        stats = (st["lo"].numpy().astype("float64"), st["hi"].numpy().astype("float64"))
+
+    out_dir = Path(a.out); out_dir.mkdir(parents=True, exist_ok=True)
     runs = sorted(p.parent for p in Path(a.prepared_root).glob("*_*/*/run.json"))
-    per_run, all_lat = [], []
+    per_run, all_lat, loads, oors = [], [], [], []
     for rd in runs:
         svc_fault = rd.parent.name
-        sample, meta, recs, lat = eval_run(rd, model, T, alpha, grid_s)
-        all_lat += lat
+        sample, meta, recs, lat, t_load, oor = eval_run(rd, model, T, alpha, grid_s, stats)
+        all_lat += lat; loads.append(t_load); oors.append(oor)
         rec = {"run": f"{svc_fault}/{rd.name}", "meta": meta,
                "label": sample["label"] if meta["inject_time"] else None,
                "inject_idx": sample["inject_idx"], "n_buckets": sample["n_buckets"],
-               "grid_s": grid_s, "T": T, "windows": recs}
+               "grid_s": grid_s, "T": T, "norm": a.norm,
+               "share_feature_values_outside_0_1": oor, "windows": recs}
         per_run.append(rec)
         svc, fault = svc_fault.rsplit("_", 1)
         (out_dir / f"{svc}_{fault}_{rd.name}.json").write_text(json.dumps(rec))
-        print(f"{rec['run']}: {len(recs)} windows")
+        tops = [max(range(len(w["scores"])), key=lambda i: w["scores"][i]) for w in recs]
+        print(f"{rec['run']}: {len(recs)} windows, inject_idx {rec['inject_idx']}, "
+              f"label {rec['label']}, top-1 per window {tops}")
 
     fault_runs = [r for r in per_run if r["meta"]["inject_time"]]
     none_runs = [r for r in per_run if not r["meta"]["inject_time"]]
@@ -160,11 +195,11 @@ def main():
             ttds.append(hit)
     ttds.sort()
     report["time_to_diagnosis"] = {
-        "median_s": ttds[len(ttds) // 2] if ttds else None,
+        "median_s": statistics.median(ttds) if ttds else None, "all_s": ttds,
         "diagnosed": len(ttds), "never_within_fault": never, "n": len(fault_runs)}
     # 4. false alarms vs detection, by top-score threshold
     def share_over(wins, thr):
-        return round(sum(max(w["scores"]) > thr for w in wins) / len(wins), 3) if wins else None
+        return sum(max(w["scores"]) > thr for w in wins) / len(wins) if wins else None
     none_w = [w for r in none_runs for w in r["windows"]]
     pre_w = [w for r in fault_runs for w in r["windows"] if w["start_unix"] + T * grid_s <= r["meta"]["inject_time"]]
     post_w = [w for r in fault_runs for w in r["windows"]
@@ -173,6 +208,11 @@ def main():
                                        "pre_fault": share_over(pre_w, t),
                                        "post_fault": share_over(post_w, t)} for t in THRESHOLDS}
     report["n_windows"] = {"none": len(none_w), "pre": len(pre_w), "post": len(post_w)}
+    def top_stats(wins):
+        t = sorted(max(w["scores"]) for w in wins)
+        return {"min": t[0], "median": statistics.median(t), "max": t[-1]} if t else None
+    report["top_score"] = {"none_runs": top_stats(none_w), "pre_fault": top_stats(pre_w),
+                           "post_fault": top_stats(post_w)}
     # 5. per fault type
     for r in fault_runs:
         ft = r["run"].split("/")[0].rsplit("_", 1)[1]
@@ -186,9 +226,15 @@ def main():
     # 6. latency and memory
     all_lat.sort()
     report["pipeline"] = {
-        "per_window_ms_median": round(all_lat[len(all_lat) // 2] * 1000, 1),
-        "per_window_ms_p95": round(all_lat[int(len(all_lat) * 0.95)] * 1000, 1),
-        "peak_rss_mb": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1)}
+        "per_window_ms_median": statistics.median(all_lat) * 1000,
+        "per_window_ms_p95": all_lat[int(len(all_lat) * 0.95)] * 1000,
+        "load_features_per_run_s_median": statistics.median(loads),
+        "load_features_per_run_s_max": max(loads),
+        "n_windows_total": len(all_lat),
+        "peak_rss_mb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024}
+    report["norm"] = a.norm
+    report["share_feature_values_outside_0_1"] = {"mean": sum(oors) / len(oors), "max": max(oors)}
+    report["n_runs"] = {"fault": len(fault_runs), "none": len(none_runs)}
 
     (out_dir / "report.json").write_text(json.dumps(report, indent=1))
     print(json.dumps(report, indent=1))

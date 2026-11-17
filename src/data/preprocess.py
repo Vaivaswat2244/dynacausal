@@ -101,13 +101,8 @@ def min_max_per_series(x: np.ndarray, eps: float = 1e-12) -> np.ndarray:
     return out
 
 
-def case_features(case: Case, grid_s: int = 15, services=OB_SERVICES):
-    """Full-recording feature tensor for one case.
-
-    Returns:
-        grid:  (G,) bucket start times (unix s)
-        feats: (N, G, D_IN) normalised to [0,1]
-    """
+def raw_case_features(case: Case, grid_s: int = 15, services=OB_SERVICES):
+    """Grid and UN-normalised (N, G, D_IN) features for one case."""
     metrics = pd.read_csv(case.path / "simple_metrics.csv", usecols=["time"])
     lo = int(_bucket(metrics["time"], grid_s).min())
     hi = int(_bucket(metrics["time"], grid_s).max())
@@ -118,4 +113,28 @@ def case_features(case: Case, grid_s: int = 15, services=OB_SERVICES):
         log_features(case.path, services, grid, grid_s),
         trace_features(case.path, services, grid, grid_s),
     ], axis=2)
+    return grid, feats
+
+
+def case_features(case: Case, grid_s: int = 15, services=OB_SERVICES):
+    """Full-recording feature tensor for one case.
+
+    Returns:
+        grid:  (G,) bucket start times (unix s)
+        feats: (N, G, D_IN) normalised to [0,1]
+    """
+    grid, feats = raw_case_features(case, grid_s, services)
     return grid, min_max_per_series(feats)
+
+
+def scale_with_stats(x: np.ndarray, lo: np.ndarray, hi: np.ndarray,
+                     eps: float = 1e-12) -> np.ndarray:
+    """Scale (N, G, D) raw features with FIXED per-(service, feature) lo/hi.
+
+    Same formula as min_max_per_series, but lo/hi come from outside (D1 train)
+    instead of from x itself. Zero-range pairs give 0. Values are not clipped,
+    so data outside the fitted range lands outside [0,1].
+    """
+    lo, hi = lo[:, None, :], hi[:, None, :]
+    rng = hi - lo
+    return np.where(rng > eps, (x - lo) / np.where(rng > eps, rng, 1.0), 0.0)

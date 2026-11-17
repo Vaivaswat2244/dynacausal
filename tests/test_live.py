@@ -68,3 +68,15 @@ def test_missing_latency_families_zero(live_run, tmp_path):
     for fam in ("metric_latency-50", "metric_latency-90"):
         col = sample["feats"][:, :, FEATURE_NAMES.index(fam)]
         assert float(col.abs().sum()) == 0.0
+
+
+def test_scale_with_stats_uses_given_range_not_the_data():
+    """Fixed lo/hi: values past the fitted range leave [0,1]; zero range -> 0."""
+    import numpy as np
+    from src.data.preprocess import scale_with_stats
+
+    x = np.array([[[5.0, 7.0], [20.0, 7.0]]])        # 1 service, 2 buckets, 2 feats
+    lo, hi = np.array([[0.0, 3.0]]), np.array([[10.0, 3.0]])
+    out = scale_with_stats(x, lo, hi)
+    assert out[0, :, 0].tolist() == [0.5, 2.0]       # not clipped, not refitted
+    assert out[0, :, 1].tolist() == [0.0, 0.0]       # zero-range feature
