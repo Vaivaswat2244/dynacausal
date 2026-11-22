@@ -159,3 +159,42 @@ decision, and should be settled by an experiment rather than assumed.
 Not yet inspected. The archive is a single 13.4 GB `.tar.gz`, which (unlike a
 ZIP) cannot be read selectively over HTTP, so inspection needs the dedicated
 machine.
+
+## Live cluster runs (Phase 2)
+
+Recorded on our own k3s cluster by `phase2/run_experiments.sh` and exported by
+`phase2/export_telemetry.py` into the D1 layout. Differences from D1, and how
+`src/data/live.py` handles each:
+
+| Item | D1 | Live | Handling |
+|---|---|---|---|
+| Metrics | `simple_metrics.csv`, 8 curated families | `metrics.csv`, 6 Prometheus container families | cpu, mem, workload mapped from cpu usage rate, memory working set, network receive rate |
+| latency-50 / latency-90 | Istio sidecar metrics, 10 services (not loadgenerator, redis) | no mesh, so no such metric | computed from traces, see below |
+| Redis name | `redis` | `redis-cart` | renamed |
+| Frontend in traces | `frontendservice` | `frontend` | both accepted |
+| Frontend entry span | operation `frontend` | operation `GET` / `POST` | any frontend operation without a `/` |
+| Status code | gRPC number | name or number, several tag names | exporter converts to the number |
+| Run metadata | `inject_time.txt` | also `run.json` (run_start, inject_time, fault_end, run_end, impact) | |
+
+### Latency units
+
+D1's `{service}_latency-50` and `_latency-90` are not defined anywhere in the
+RCAEval files we have. Their values in `checkoutservice_cpu/1` (frontend p50
+0.17 to 0.21, checkoutservice 0.20 to 0.50, productcatalogservice about
+0.002) are only plausible as **seconds** measured at the Istio sidecar: the
+same case's own spans give frontend p50 3.7 ms and checkoutservice 4.3 ms,
+and an Istio millisecond histogram cannot produce a p50 of 0.002 ms. This is
+an inference from the values, not a documented fact.
+
+The live latency features are therefore written in seconds. For service S
+they are the 50th and 90th percentile, per 15 s bucket, of the duration of
+spans that CALL S (client spans naming S as the callee, the same direction
+rule as the call edges), plus the frontend's own entry spans. That is
+latency as seen by the caller, which is what a sidecar measures, and it
+covers the 10 services D1 has latency for, including the three that emit no
+spans of their own. Buckets with no call are forward filled, then 0;
+`latency_presence.csv` in the prepared run records which buckets were real.
+The Phase 1 model has no mask input, so the mask is for reporting only.
+
+The scale only matters for `--norm d1train`; `causal` and `percase` scaling
+divide by the run's own range.

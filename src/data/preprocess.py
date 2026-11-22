@@ -138,3 +138,29 @@ def scale_with_stats(x: np.ndarray, lo: np.ndarray, hi: np.ndarray,
     lo, hi = lo[:, None, :], hi[:, None, :]
     rng = hi - lo
     return np.where(rng > eps, (x - lo) / np.where(rng > eps, rng, 1.0), 0.0)
+
+
+def causal_scale(window: np.ndarray, history: np.ndarray, clip: bool = True,
+                 eps: float = 1e-12) -> np.ndarray:
+    """Scale an (N, T, D) window using min/max of the PAST only.
+
+    history is the (N, H, D) raw data from the start of the run up to, but
+    not including, the first bucket of the window, so nothing from the window
+    or after it leaks into the scaling.
+
+    clip=True keeps the result in [0,1], the range the model saw in training:
+    a value above everything seen so far becomes 1, below becomes 0. When the
+    history is constant there is no range to divide by; a value equal to it
+    becomes 0, a higher one 1 (e.g. an error rate that was 0 until now).
+    clip=False divides by the history range without limits and maps a
+    zero-range feature to 0, as min_max_per_series does.
+    """
+    lo = history.min(axis=1, keepdims=True)
+    hi = history.max(axis=1, keepdims=True)
+    rng = hi - lo
+    ok = rng > eps
+    scaled = (window - lo) / np.where(ok, rng, 1.0)
+    if not clip:
+        return np.where(ok, scaled, 0.0)
+    flat = (window > lo + eps).astype(float)          # zero-range features
+    return np.clip(np.where(ok, scaled, flat), 0.0, 1.0)

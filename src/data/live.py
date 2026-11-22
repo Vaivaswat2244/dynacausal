@@ -8,9 +8,8 @@ case, with three differences:
       cpu      <- container-cpu-usage-seconds-total   (already a rate)
       mem      <- container-memory-working-set-bytes
       workload <- container-network-receive-bytes-total (request-volume proxy)
-  latency-50 / latency-90 have no live source; the columns are left out and
-  preprocess.metric_features zeros them, the same treatment a D1 service
-  lacking a family gets.
+  latency-50 / latency-90 are not Prometheus metrics live (no Istio mesh), so
+  they are computed from traces.csv, see latency_columns().
 - The redis service is named "redis-cart" live and "redis" in D1.
 - Trace operation names may carry a "grpc." prefix (handled in loaders._OP_RE).
 
@@ -25,7 +24,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from .loaders import OB_SERVICES
+from .loaders import _TRACE_NAME_FIX, OB_SERVICES, callee_from_operation
+
+GRID_S = 15
+LATENCY_UNIT_DIVISOR = 1_000_000   # span duration is in microseconds; D1 latency is in seconds
 
 LIVE_FAMILY_MAP = {
     "cpu": "container-cpu-usage-seconds-total",
@@ -37,6 +39,45 @@ LIVE_RENAME = {"redis-cart": "redis"}
 
 def _d1_name(svc: str) -> str:
     return LIVE_RENAME.get(svc, svc)
+
+
+def latency_columns(traces: pd.DataFrame, times: pd.Series, grid_s: int = GRID_S):
+    """latency-50 / latency-90 per service on the 1 s metric rows, from spans.
+
+    A span counts toward service S when S is the one being called: client
+    spans whose operation names S as the callee (the same direction rule the
+    call-edge code uses), plus, for the frontend, its own HTTP entry spans
+    (operation without a "/"), because no traced service calls the frontend.
+    Durations are grouped into grid_s buckets and the 50th and 90th
+    percentile taken, in SECONDS to match D1's latency columns.
+
+    Buckets with no span are NaN, then forward filled, then 0. Returns
+    (values, present): two DataFrames indexed like `times`; `present` is True
+    only where the bucket itself had spans.
+    """
+    caller = traces["serviceName"].replace(_TRACE_NAME_FIX)
+    callee = traces["operationName"].map(callee_from_operation).replace(_TRACE_NAME_FIX)
+    target = callee.where(callee.notna() & (caller != callee))
+    entry = (caller == "frontend") & ~traces["operationName"].astype(str).str.contains("/")
+    target = target.where(~entry, "frontend")
+    df = pd.DataFrame({
+        "svc": target,
+        "b": (traces["startTime"] // 1_000_000 // grid_s) * grid_s,
+        "dur": traces["duration"] / LATENCY_UNIT_DIVISOR,
+    }).dropna(subset=["svc"])
+    q = df.groupby(["svc", "b"])["dur"].quantile([0.5, 0.9]).unstack()
+
+    row_bucket = (times // grid_s) * grid_s
+    values, present = {}, {}
+    for svc in OB_SERVICES:
+        if svc not in q.index.get_level_values("svc"):
+            continue
+        per_bucket = q.loc[svc]
+        for quant, fam in ((0.5, "latency-50"), (0.9, "latency-90")):
+            col = row_bucket.map(per_bucket[quant])
+            present[f"{svc}_{fam}"] = col.notna()
+            values[f"{svc}_{fam}"] = col.ffill().fillna(0.0)
+    return pd.DataFrame(values, index=times.index), pd.DataFrame(present, index=times.index)
 
 
 def prepare_live_case(run_dir: str | Path, out_root: str | Path) -> Path:
@@ -53,15 +94,20 @@ def prepare_live_case(run_dir: str | Path, out_root: str | Path) -> Path:
             col = f"{live_svc}_{live_fam}"
             if col in m.columns:
                 cols[f"{svc}_{fam}"] = m[col]
-    pd.DataFrame(cols).to_csv(out / "simple_metrics.csv", index=False)
+    traces = pd.read_csv(run_dir / "traces.csv")
+    traces["serviceName"] = traces["serviceName"].replace(LIVE_RENAME)
+    traces.to_csv(out / "traces.csv", index=False)
+
+    lat, present = latency_columns(traces, m["time"])
+    simple = pd.concat([pd.DataFrame(cols), lat], axis=1)
+    simple.to_csv(out / "simple_metrics.csv", index=False)
+    # Presence mask for the latency families (the Phase 1 model has no mask
+    # input, so this is kept next to the data for reporting only).
+    pd.concat([m[["time"]], present], axis=1).to_csv(out / "latency_presence.csv", index=False)
 
     logs = pd.read_csv(run_dir / "logs.csv")
     logs["container_name"] = logs["container_name"].replace(LIVE_RENAME)
     logs.to_csv(out / "logs.csv", index=False)
-
-    traces = pd.read_csv(run_dir / "traces.csv")
-    traces["serviceName"] = traces["serviceName"].replace(LIVE_RENAME)
-    traces.to_csv(out / "traces.csv", index=False)
 
     for f in ("inject_time.txt", "run.json"):
         if (run_dir / f).exists():
