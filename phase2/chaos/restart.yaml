@@ -1,0 +1,12 @@
+# Container restart: the main container is killed once at inject time and
+# Kubernetes restarts it. One-shot, so ${DURATION} does not apply here; the
+# run still labels the following ${DURATION} as the fault period.
+# Online Boutique names every service container "server" (redis-cart: "redis").
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata: {name: ${NAME}, namespace: boutique}
+spec:
+  action: container-kill
+  mode: all
+  containerNames: ["server"]
+  selector: {namespaces: [boutique], labelSelectors: {app: ${SERVICE}}}

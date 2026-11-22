@@ -1,0 +1,9 @@
+# Clock skew: the target's clock jumps 300 s ahead for the fault duration.
+apiVersion: chaos-mesh.org/v1alpha1
+kind: TimeChaos
+metadata: {name: ${NAME}, namespace: boutique}
+spec:
+  mode: all
+  selector: {namespaces: [boutique], labelSelectors: {app: ${SERVICE}}}
+  timeOffset: "300s"
+  duration: ${DURATION}

@@ -1,0 +1,10 @@
+# Socket stress, matching D1's "socket" fault: stress-ng sock workers open,
+# use and close sockets continuously inside the target container's cgroup.
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata: {name: ${NAME}, namespace: boutique}
+spec:
+  mode: all
+  selector: {namespaces: [boutique], labelSelectors: {app: ${SERVICE}}}
+  stressngStressors: "--sock 8"
+  duration: ${DURATION}

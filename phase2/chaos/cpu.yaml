@@ -1,8 +1,12 @@
+# CPU stress: 8 busy workers inside the target's cgroup. On an 8-core node
+# with no pod CPU limit the container simply uses spare cores and the service
+# barely slows down, so pod CPU limits MUST be set for this to bite
+# (phase2/set_limits.sh, on for all batches).
 apiVersion: chaos-mesh.org/v1alpha1
 kind: StressChaos
 metadata: {name: ${NAME}, namespace: boutique}
 spec:
   mode: all
   selector: {namespaces: [boutique], labelSelectors: {app: ${SERVICE}}}
-  stressors: {cpu: {workers: 4, load: 100}}
+  stressors: {cpu: {workers: 8, load: 100}}
   duration: ${DURATION}

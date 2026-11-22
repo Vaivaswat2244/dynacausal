@@ -1,0 +1,12 @@
+# Disk stress, matching D1's "disk" fault: stress-ng hdd workers write and
+# remove files continuously, charged to the target container's cgroup.
+# StressChaos has typed stressors only for cpu and memory; anything else goes
+# through stressngStressors (raw stress-ng arguments).
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata: {name: ${NAME}, namespace: boutique}
+spec:
+  mode: all
+  selector: {namespaces: [boutique], labelSelectors: {app: ${SERVICE}}}
+  stressngStressors: "--hdd 4 --hdd-bytes 512M"
+  duration: ${DURATION}

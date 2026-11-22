@@ -1,0 +1,14 @@
+# DNS errors for the names the target service looks up for its downstream
+# calls (${DNS_PATTERNS} is filled in by run_experiments.sh per service; a
+# leaf service with no downstream calls gets "*", every name).
+# Needs the Chaos Mesh DNS server: helm upgrade ... --set dnsServer.create=true
+# (phase2/set_limits.sh does not do this; see setup_extended.sh).
+apiVersion: chaos-mesh.org/v1alpha1
+kind: DNSChaos
+metadata: {name: ${NAME}, namespace: boutique}
+spec:
+  action: error
+  mode: all
+  patterns: [${DNS_PATTERNS}]
+  selector: {namespaces: [boutique], labelSelectors: {app: ${SERVICE}}}
+  duration: ${DURATION}

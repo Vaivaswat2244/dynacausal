@@ -15,7 +15,7 @@ Usage (with port-forwards to localhost running):
 Needs: pip install requests pandas
 """
 from __future__ import annotations
-import argparse, json, sys, time
+import argparse, json, os, sys, time
 from pathlib import Path
 import pandas as pd
 import requests
@@ -24,6 +24,10 @@ PROM = "http://localhost:9090"
 JAEGER = "http://localhost:16686"
 LOKI = "http://localhost:3100"
 NS = "boutique"
+# rate() needs at least two scrapes inside its window. 30s is enough for a
+# 15s scrape; run_experiments.sh raises it to 4x the scrape interval for
+# coarser scrapes, otherwise the rate columns would come back empty.
+RATE_WINDOW = os.environ.get("RATE_WINDOW", "30s")
 SERVICES = ["adservice", "cartservice", "checkoutservice", "currencyservice",
             "emailservice", "frontend", "loadgenerator", "paymentservice",
             "productcatalogservice", "recommendationservice", "redis-cart",
@@ -64,7 +68,7 @@ def export_metrics(start: int, end: int) -> pd.DataFrame:
     cols = {}
     for svc in SERVICES:
         for fam, q in METRICS.items():
-            s = prom_range(q % (NS, svc), start, end)
+            s = prom_range((q % (NS, svc)).replace("[30s]", f"[{RATE_WINDOW}]"), start, end)
             cols[f"{svc}_{fam}"] = s.reindex(grid).ffill()
     df = pd.DataFrame(cols, index=grid).reset_index()
     return df
