@@ -4,7 +4,10 @@
 # SCRAPE: Prometheus scrape interval (global, and the kubelet/cAdvisor
 #   targets that carry the container metrics), via helm upgrade of the
 #   kube-prometheus-stack release at its CURRENT chart version.
-# SAMPLE: share of traces kept. Sets the standard OpenTelemetry sampler env
+# SAMPLE: share of traces kept. NOTE: the env vars below do not take effect on
+#   this application (its Go services hard-code AlwaysSample); the ratio is
+#   recorded in state.json and applied by export_telemetry.py at export time.
+#   Sets the standard OpenTelemetry sampler env
 #   vars on every boutique deployment and waits for the rollout.
 # The export grid stays 1 s and the feature grid 15 s whatever the scrape
 # interval is, so a coarser scrape shows up as repeated values.

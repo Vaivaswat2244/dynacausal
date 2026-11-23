@@ -20,7 +20,7 @@ FAULTS=${FAULTS:-"cpu mem disk socket delay loss"}
 REPS=${REPS:-1}
 RUN_S=${RUN_S:-900}        # total run length (15 min)
 FAULT_S=${FAULT_S:-300}    # fault duration (5 min)
-MIN_PRE=${MIN_PRE:-330}    # fault starts no earlier than this
+MIN_PRE=${MIN_PRE:-420}    # fault starts no earlier than this (420 = 120 s history + one 300 s window before the fault)
 MIN_POST=${MIN_POST:-120}  # and leaves at least this much time after it ends
 SETTLE_S=${SETTLE_S:-60}   # pause between runs
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -30,6 +30,8 @@ mkdir -p "$OUT"
 # rate() window for the export: at least 4 scrapes, never below 30s.
 SCRAPE_S=$(python3 -c "import json,sys;print(int(json.load(open('$STATE')).get('scrape','15s').rstrip('s')))" 2>/dev/null || echo 15)
 export RATE_WINDOW="$(( SCRAPE_S * 4 > 30 ? SCRAPE_S * 4 : 30 ))s"
+# Trace sampling ratio, applied at export (see export_telemetry.py for why).
+export TRACE_SAMPLE=$(python3 -c "import json;print(json.load(open('$STATE')).get('sample','1.0'))" 2>/dev/null || echo 1.0)
 
 python3 - "$OUT/settings.json" "$STATE" <<PY
 import json, os, sys, time
@@ -37,7 +39,7 @@ state = json.load(open(sys.argv[2])) if os.path.exists(sys.argv[2]) else {}
 json.dump({"written_unix": int(time.time()), "SERVICES": "$SERVICES", "FAULTS": "$FAULTS",
            "REPS": $REPS, "RUN_S": $RUN_S, "FAULT_S": $FAULT_S, "MIN_PRE": $MIN_PRE,
            "MIN_POST": $MIN_POST, "SETTLE_S": $SETTLE_S, "NONE_N": $NONE_N,
-           "RATE_WINDOW": "$RATE_WINDOW", "cluster_state": state}, open(sys.argv[1], "w"), indent=1)
+           "RATE_WINDOW": "$RATE_WINDOW", "TRACE_SAMPLE_applied_at_export": "$TRACE_SAMPLE", "cluster_state": state}, open(sys.argv[1], "w"), indent=1)
 PY
 
 # DNS fault: names the target service looks up for its downstream calls.

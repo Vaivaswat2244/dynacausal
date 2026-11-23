@@ -41,7 +41,10 @@ def impact_of(run_dir: Path):
     meta = json.loads((run_dir / "run.json").read_text())
     if not meta.get("inject_time"):
         return None
-    t = pd.read_csv(run_dir / "traces.csv",
+    # Sampled batches keep the unsampled export next to traces.csv; the impact
+    # flag describes the run itself, so it uses the full traces when present.
+    src = run_dir / "traces_full.csv"
+    t = pd.read_csv(src if src.exists() else run_dir / "traces.csv",
                     usecols=["serviceName", "operationName", "startTime", "duration", "statusCode"])
     fe = t[t["serviceName"].isin(["frontend", "frontendservice"])
            & ~t["operationName"].astype(str).str.contains("/")]

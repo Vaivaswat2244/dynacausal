@@ -28,6 +28,18 @@ NS = "boutique"
 # 15s scrape; run_experiments.sh raises it to 4x the scrape interval for
 # coarser scrapes, otherwise the rate columns would come back empty.
 RATE_WINDOW = os.environ.get("RATE_WINDOW", "30s")
+# Trace sampling. Online Boutique's Go services hard-code AlwaysSample, so the
+# OTEL_TRACES_SAMPLER env vars set by set_monitoring.sh do not reduce the
+# span volume (checked on the cluster: 6679 vs 5095 spans per 90 s at 1.0 and
+# 0.1). The ratio is therefore applied here, with the same rule the
+# OpenTelemetry TraceIdRatioBased sampler uses: a whole trace is kept when
+# the low 56 bits of its trace id fall below ratio * 2^56. traces.csv holds
+# the sampled spans; the unsampled export is kept as traces_full.csv.
+TRACE_SAMPLE = float(os.environ.get("TRACE_SAMPLE", "1.0"))
+
+
+def keep_trace(trace_id: str, ratio: float) -> bool:
+    return int(trace_id[-14:], 16) < ratio * (1 << 56)
 SERVICES = ["adservice", "cartservice", "checkoutservice", "currencyservice",
             "emailservice", "frontend", "loadgenerator", "paymentservice",
             "productcatalogservice", "recommendationservice", "redis-cart",
@@ -165,7 +177,11 @@ def export_run(run_dir: Path) -> None:
     start, end = meta["run_start"], meta["run_end"]
     print(f"{run_dir}: {end - start}s window")
     export_metrics(start, end).to_csv(run_dir / "metrics.csv", index=False)
-    tr = export_traces(start, end); tr.to_csv(run_dir / "traces.csv", index=False)
+    tr = export_traces(start, end)
+    if TRACE_SAMPLE < 1.0:
+        tr.to_csv(run_dir / "traces_full.csv", index=False)
+        tr = tr[tr["traceID"].map(lambda t: keep_trace(t, TRACE_SAMPLE))]
+    tr.to_csv(run_dir / "traces.csv", index=False)
     lg = export_logs(start, end); lg.to_csv(run_dir / "logs.csv", index=False)
     print(f"  metrics ok, {len(tr)} spans, {len(lg)} log lines")
 
